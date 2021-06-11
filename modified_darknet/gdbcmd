@@ -1,0 +1,1 @@
+gdb  --args ./darknet classify cfg/tiny.cfg tiny.weights data/dog.jpg

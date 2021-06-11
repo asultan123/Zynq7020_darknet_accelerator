@@ -1,0 +1,4 @@
+alias dew = dashboard expression watch
+alias deu = dashboard expression unwatch
+alias dec = dashboard expression clear
+alias sh = shell

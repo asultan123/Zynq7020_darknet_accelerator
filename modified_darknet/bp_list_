@@ -1,0 +1,4 @@
+break /Users/alysultan/darknet/src/network.c:216
+break /Users/alysultan/darknet/src/convolutional_layer.c:974
+break /Users/alysultan/darknet/src/im2col.c:21
+watch c_im

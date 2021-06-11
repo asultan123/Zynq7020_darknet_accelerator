@@ -1,0 +1,79 @@
+
+ seen 32 
+224 224
+    printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
+
+cpu: 0 0 16 50176 27 1.000000 27 50176 1.000000 50176
+cpu: 0 0 32 12544 144 1.000000 144 12544 1.000000 12544
+cpu: 0 0 16 3136 32 1.000000 32 3136 1.000000 3136
+cpu: 0 0 128 3136 144 1.000000 144 3136 1.000000 3136
+cpu: 0 0 16 3136 128 1.000000 128 3136 1.000000 3136
+cpu: 0 0 128 3136 144 1.000000 144 3136 1.000000 3136
+cpu: 0 0 32 784 128 1.000000 128 784 1.000000 784
+cpu: 0 0 256 784 288 1.000000 288 784 1.000000 784
+cpu: 0 0 32 784 256 1.000000 256 784 1.000000 784
+cpu: 0 0 256 784 288 1.000000 288 784 1.000000 784
+cpu: 0 0 64 196 256 1.000000 256 196 1.000000 196
+cpu: 0 0 512 196 576 1.000000 576 196 1.000000 196
+cpu: 0 0 64 196 512 1.000000 512 196 1.000000 196
+cpu: 0 0 512 196 576 1.000000 576 196 1.000000 196
+cpu: 0 0 128 196 512 1.000000 512 196 1.000000 196
+cpu: 0 0 1000 196 128 1.000000 128 196 1.000000 196
+data/dog.jpg: Predicted in 0.155260 seconds.
+malamute: 0.145114
+Newfoundland: 0.060877
+dogsled: 0.055897
+standard schnauzer: 0.045538
+Eskimo dog: 0.040509
+
+void gemm_nn(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C, int ldc)
+{
+    //  printf("HERE!!!!!\n");
+    int i, j, k;
+    for (i = 0; i < M; ++i) {
+        for (k = 0; k < K; ++k) {
+            PUT_IN_REGISTER float A_PART = ALPHA * A[i * lda + k];
+            for (j = 0; j < N; ++j) {
+                C[i*ldc + j] += A_PART*B[k*ldb + j];
+            }
+        }
+    }
+}
+
+void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
+        float *A, int lda,
+        float *B, int ldb,
+        float BETA,
+        float *C, int ldc)
+{
+    printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
+    if (BETA != 1){
+        int i, j;
+        for(i = 0; i < M; ++i){
+            for(j = 0; j < N; ++j){
+                C[i*ldc + j] *= BETA;
+            }
+        }
+    }
+
+    is_avx();   // initialize static variable
+    if (is_fma_avx2() && !TA && !TB) {
+        gemm_nn_fast(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
+    }
+    else {
+        int t;
+        #pragma omp parallel for
+        for (t = 0; t < M; ++t) {
+            if (!TA && !TB)
+                gemm_nn(1, N, K, ALPHA, A + t*lda, lda, B, ldb, C + t*ldc, ldc);
+            else if (TA && !TB)
+                gemm_tn(1, N, K, ALPHA, A + t, lda, B, ldb, C + t*ldc, ldc);
+            else if (!TA && TB)
+                gemm_nt(1, N, K, ALPHA, A + t*lda, lda, B, ldb, C + t*ldc, ldc);
+            else
+                gemm_tt(1, N, K, ALPHA, A + t, lda, B, ldb, C + t*ldc, ldc);
+        }
+    }
+}
+
+

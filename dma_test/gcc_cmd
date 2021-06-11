@@ -1,0 +1,2 @@
+gcc -g -I. -L. sharedLibraryTest.c -o out libcma.so -pthread; sudo ./out
+

@@ -1,0 +1,15 @@
+*.pyc
+*~
+.*.sw[op]
+*.egg-info
+dist
+build
+distribute-*gz
+distribute-*egg
+setuptools-*gz
+setuptools-*egg
+traceback*txt
+.DS_Store
+.cache/
+.coverage
+coverage.xml
